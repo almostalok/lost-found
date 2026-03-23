@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────
+
+enum ItemStatus {
+  LOST
+  FOUND
+  CLAIMED
+  RETURNED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  MATCH_FOUND
+  CLAIM_UPDATE
+  ITEM_UPDATE
+  SYSTEM
+}
+
+// ─── MODELS ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items         Item[]
+  claimsCreated Claim[]        @relation("ClaimCreator")
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Item {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  category    String
+  status      ItemStatus @default(LOST)
+  images      String[]
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  date        DateTime
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  claims  Claim[]
+  matches Match[]
+
+  @@index([status])
+  @@index([category])
+  @@index([userId])
+  @@map("items")
+}
+
+model Claim {
+  id          String      @id @default(cuid())
+  message     String
+  status      ClaimStatus @default(PENDING)
+  evidence    String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  claimantId String
+  claimant   User   @relation("ClaimCreator", fields: [claimantId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([claimantId])
+  @@map("claims")
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  score      Float
+  createdAt  DateTime @default(now())
+
+  lostItemId  String
+  foundItemId String
+
+  lostItem  Item @relation(fields: [lostItemId], references: [id], onDelete: Cascade)
+
+  @@index([lostItemId])
+  @@index([foundItemId])
+  @@map("matches")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}
