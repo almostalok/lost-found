@@ -26,38 +26,41 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen flex bg-neutral-950 text-neutral-100 selection:bg-neutral-800">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 p-6 hidden md:flex flex-col">
-        <Link href="/" className="flex items-center gap-2 mb-10 text-gray-900 group">
-          <HeartPulse className="h-8 w-8 text-blue-600 group-hover:scale-110 transition-transform" />
-          <span className="text-2xl font-bold tracking-tight">Returnly</span>
+      <aside className="w-64 bg-neutral-950 border-r border-neutral-800/50 p-6 hidden md:flex flex-col">
+        <Link href="/" className="flex items-center gap-3 mb-12 text-neutral-100 group transition-opacity hover:opacity-80">
+          <HeartPulse className="h-6 w-6 text-neutral-100" />
+          <span className="text-xl font-medium tracking-tight">Returnly</span>
         </Link>
-        <nav className="space-y-1.5 flex-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                pathname.startsWith(item.path)
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              }`}
-            >
-              <div className={pathname.startsWith(item.path) ? "text-blue-600" : "text-gray-400"}>
-                {item.icon}
-              </div>
-              {item.name}
-            </Link>
-          ))}
+        <nav className="space-y-1 flex-1">
+          {navItems.map((item) => {
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-neutral-800/80 text-neutral-100 shadow-sm"
+                    : "text-neutral-400 hover:bg-neutral-800/40 hover:text-neutral-200"
+                }`}
+              >
+                <div className={`${isActive ? "text-neutral-100" : "text-neutral-400"}`}>
+                  {item.icon}
+                </div>
+                {item.name}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-gray-100">
+        <div className="mt-auto hidden md:block">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-gray-600 hover:bg-red-50 hover:text-red-700 transition"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-neutral-400 hover:bg-neutral-800/40 hover:text-neutral-200 transition-all duration-200 group"
           >
-            <LogOut size={20} className="text-gray-400 group-hover:text-red-600" />
+            <LogOut size={20} className="text-neutral-400 group-hover:text-neutral-200 transition-colors" />
             Sign Out
           </button>
         </div>
@@ -65,7 +68,9 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto w-full h-screen">
-        {children}
+        <div className="max-w-6xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
