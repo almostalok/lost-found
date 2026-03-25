@@ -22,6 +22,7 @@ export class AuthService {
       email: input.email,
       password: hashedPassword,
       phone: input.phone,
+      aadhar: input.aadhar,
     });
 
     const token = jwt.sign({ userId: user.id, email: user.email }, config.jwt.secret, { expiresIn: config.jwt.expiresIn as any });

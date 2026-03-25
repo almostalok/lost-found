@@ -100,7 +100,7 @@ export default function MapViewInner({
   if (!isMounted) return null;
 
   return (
-    <div className="w-full h-full rounded-xl overflow-hidden shadow-sm border border-gray-200">
+    <div className="w-full h-full rounded-xl overflow-hidden border border-neutral-800 bg-neutral-900 z-0 relative shadow-inner">
       <MapContainer
         center={center}
         zoom={zoom}
@@ -110,7 +110,7 @@ export default function MapViewInner({
         <MapUpdater center={center} zoom={zoom} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
 
         {showHeatmap && <HeatmapLayerComponent items={items} />}

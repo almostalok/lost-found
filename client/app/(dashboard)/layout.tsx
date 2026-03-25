@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { HeartPulse, LayoutList, Map, UserCircle, LogOut } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { HeartPulse, LayoutList, Map, UserCircle, LogOut, Bell } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -12,7 +11,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth(); // Assume we have a logout function in useAuth
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -22,6 +21,7 @@ export default function DashboardLayout({
   const navItems = [
     { name: "Items", path: "/items", icon: <LayoutList size={20} /> },
     { name: "Map", path: "/map", icon: <Map size={20} /> },
+    { name: "Notifications", path: "/notifications", icon: <Bell size={20} /> },
     { name: "Profile", path: "/profile", icon: <UserCircle size={20} /> },
   ];
 

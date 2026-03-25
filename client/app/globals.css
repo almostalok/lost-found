@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Enforce Dark, Minimalistic UI */
+  --background: #0a0a0a;   /* Deep Neutral Black */
+  --foreground: #ededed;   /* Crisp Light Gray */
+  
+  /* Primary & Semantic Colors */
+  --primary: #2563eb;      /* Blue (Trust) */
+  --primary-hover: #1d4ed8;
+  --secondary: #22c55e;    /* Green (Success) */
+  --error: #ef4444;        /* Red (Error/Warning) */
+  --surface: #171717;      /* Slightly lighter for cards */
+  --border: #262626;       /* Neutral border */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-error: var(--error);
+  --font-sans: "Inter", var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Utility Classes for Uniformity */
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200;
+  }
+  .btn-secondary {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200;
+  }
+  .card {
+    @apply bg-[#171717] border border-[#262626] rounded-xl shadow-sm overflow-hidden;
+  }
+  .input-field {
+    @apply w-full bg-[#0a0a0a] border border-[#262626] rounded-md px-3 py-2 text-[#ededed] focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-200;
+  }
 }

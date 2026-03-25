@@ -58,7 +58,7 @@ export default function LocationPickerInner({ defaultLocation, onSelect }: Locat
   if (!isMounted) return null;
 
   return (
-    <div className="w-full h-[300px] rounded-xl overflow-hidden shadow-sm border border-gray-200">
+    <div className="w-full h-full min-h-[300px] z-0 relative bg-neutral-900">
       <MapContainer
         center={defaultLocation || defaultCenter}
         zoom={13}
@@ -68,7 +68,7 @@ export default function LocationPickerInner({ defaultLocation, onSelect }: Locat
         <MapUpdater center={defaultLocation || defaultCenter} zoom={13} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         
         <LocationPickerEventHandler onSelect={onSelect} />
