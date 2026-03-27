@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { HeartPulse, LayoutList, Map, UserCircle, LogOut, Bell } from "lucide-react";
+import { HeartPulse, LayoutList, Map, UserCircle, LogOut, Bell, MessageCircle, ScanLine, QrCode } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardLayout({
   children,
@@ -21,6 +22,9 @@ export default function DashboardLayout({
   const navItems = [
     { name: "Items", path: "/items", icon: <LayoutList size={20} /> },
     { name: "Map", path: "/map", icon: <Map size={20} /> },
+    { name: "Chats", path: "/chats", icon: <MessageCircle size={20} /> },
+    { name: "QR Generator", path: "/generate", icon: <QrCode size={20} /> },
+    { name: "QR Scanner", path: "/scan", icon: <ScanLine size={20} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={20} /> },
     { name: "Profile", path: "/profile", icon: <UserCircle size={20} /> },
   ];

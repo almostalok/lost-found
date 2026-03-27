@@ -20,10 +20,26 @@ export class ClaimController {
     res.status(200).json(apiResponse(claims));
   });
 
+  getMyChats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const chats = await claimService.getUserChats(req.user!.userId);
+    res.status(200).json(apiResponse(chats));
+  });
+
   updateStatus = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { status } = req.body;
     const claim = await claimService.updateClaimStatus(req.params.id as string, req.user!.userId, status);
     res.status(200).json(apiResponse(claim, 'Claim status updated'));
+  });
+
+  getMessages = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const messages = await claimService.getMessages(req.params.id as string, req.user!.userId);
+    res.status(200).json(apiResponse(messages));
+  });
+
+  addMessage = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { text } = req.body;
+    const message = await claimService.addMessage(req.params.id as string, req.user!.userId, text);
+    res.status(201).json(apiResponse(message, 'Message sent', 201));
   });
 }
 

@@ -8,6 +8,10 @@ export interface MapItem {
   latitude?: number | null;
   longitude?: number | null;
   status?: string;
+  category?: string;
+  images?: string[];
+  date?: string;
+  description?: string;
 }
 
 // Fallback skeleton loader

@@ -2,6 +2,7 @@ import { claimRepository } from '../repositories/claim.repository';
 import { itemRepository } from '../repositories/item.repository';
 import { ApiError } from '../lib/utils';
 import { ClaimStatus } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 export class ClaimService {
   /**
@@ -48,6 +49,31 @@ export class ClaimService {
    */
   async getClaimsByItem(itemId: string) {
     return claimRepository.findByItemId(itemId);
+  }
+
+  /**
+   * Get all claims for a user (either as claimant or item owner).
+   */
+  async getUserChats(userId: string) {
+    const claims = await prisma.claim.findMany({
+      where: {
+        OR: [
+          { claimantId: userId },
+          { item: { userId: userId } }
+        ]
+      },
+      include: {
+        item: { select: { id: true, title: true, images: true, userId: true } },
+        claimant: { select: { id: true, name: true, avatar: true } },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return claims;
   }
 
   /**
@@ -98,6 +124,62 @@ export class ClaimService {
     }
 
     return updatedClaim;
+  }
+  /**
+   * Get messages for a claim.
+   */
+  async getMessages(claimId: string, userId: string) {
+    const claim = await claimRepository.findById(claimId);
+    if (!claim) {
+      throw new ApiError(404, 'Claim not found');
+    }
+
+    if (claim.item.userId !== userId && claim.claimantId !== userId) {
+      throw new ApiError(403, 'Not authorized to view these messages');
+    }
+
+    return prisma.message.findMany({
+      where: { claimId },
+      include: { sender: { select: { id: true, name: true, avatar: true } } },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
+
+  /**
+   * Add a message to a claim chat.
+   */
+  async addMessage(claimId: string, userId: string, text: string) {
+    const claim = await claimRepository.findById(claimId);
+    if (!claim) throw new ApiError(404, 'Claim not found');
+    
+    if (claim.item.userId !== userId && claim.claimantId !== userId) {
+      throw new ApiError(403, 'Not authorized to message on this claim');
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        text,
+        claimId,
+        senderId: userId
+      },
+      include: {
+        sender: { select: { id: true, name: true, avatar: true } }
+      }
+    });
+
+    // Notify the other party
+    const receiverId = claim.item.userId === userId ? claim.claimantId : claim.item.userId;
+    import('./notification.service').then(({ notificationService }) => {
+      notificationService.create(
+        receiverId,
+        'CLAIM_UPDATE',
+        'New Message',
+        `You have a new message regarding a claim.`,
+        { claimId: claim.id }
+      ).catch(console.error);
+    });
+
+    return message;
   }
 }
 

@@ -14,6 +14,16 @@ export function useMyClaims() {
   });
 }
 
+export function useMyChats() {
+  return useQuery({
+    queryKey: ["claims", "chats"],
+    queryFn: async () => {
+      const response = await api.get<{ data: any[], success: boolean }>("/claims/chats");
+      return response.data;
+    }
+  });
+}
+
 export function useItemClaims(itemId: string) {
   return useQuery({
     queryKey: ["claims", "item", itemId],
@@ -49,9 +59,46 @@ export function useUpdateClaimStatus() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate everything related to claims and items
       queryClient.invalidateQueries({ queryKey: ["claims"] });
       queryClient.invalidateQueries({ queryKey: ["items"] });
+    }
+  });
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  createdAt: string;
+  senderId: string;
+  claimId: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+}
+
+export function useClaimMessages(claimId: string) {
+  return useQuery({
+    queryKey: ["claims", claimId, "messages"],
+    queryFn: async () => {
+      const response = await api.get<{ data: Message[], success: boolean }>(`/claims/${claimId}/messages`);
+      return response.data;
+    },
+    enabled: !!claimId,
+  });
+}
+
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ claimId, text }: { claimId: string, text: string }) => {
+      const response = await api.post<{ data: Message, success: boolean }>(`/claims/${claimId}/messages`, { text });
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["claims", variables.claimId, "messages"] });
     }
   });
 }

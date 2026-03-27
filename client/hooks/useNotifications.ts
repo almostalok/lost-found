@@ -37,7 +37,7 @@ export function useNotifications() {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.patch(`/notifications/${id}/read`);
+      await api.patch(`/notifications/${id}/read`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -46,7 +46,7 @@ export function useNotifications() {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      await api.patch("/notifications/read-all");
+      await api.patch("/notifications/read-all", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

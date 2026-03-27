@@ -48,6 +48,7 @@ model User {
   items         Item[]
   claimsCreated Claim[]        @relation("ClaimCreator")
   notifications Notification[]
+  messages      Message[]
 
   @@map("users")
 }
@@ -91,6 +92,8 @@ model Claim {
 
   claimantId String
   claimant   User   @relation("ClaimCreator", fields: [claimantId], references: [id], onDelete: Cascade)
+  
+  messages   Message[] @relation("ClaimMessages")
 
   @@index([itemId])
   @@index([claimantId])
@@ -127,4 +130,18 @@ model Notification {
   @@index([userId])
   @@index([read])
   @@map("notifications")
+}
+model Message {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+
+  claimId   String
+  claim     Claim    @relation("ClaimMessages", fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@map("messages")
 }

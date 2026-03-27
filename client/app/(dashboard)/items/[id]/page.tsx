@@ -4,11 +4,14 @@ import { useItem } from "@/hooks/useItems";
 import { useParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { ClaimForm } from "@/components/forms/ClaimForm";
+import { ChatWindow } from "@/components/ChatWindow";
 import { useState, useEffect } from "react";
-import { useItemClaims, useUpdateClaimStatus } from "@/hooks/useClaims";
+import { useItemClaims, useUpdateClaimStatus, useCreateClaim } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
 import { MapView } from "@/components/maps/MapView";
-import { Printer, MapPin, Tag, Calendar, User as UserIcon, ShieldAlert } from "lucide-react";
+import { Printer, MapPin, Tag, Calendar, User as UserIcon, ShieldAlert, MessageCircle } from "lucide-react";
 
 export default function ItemDetailsPage() {
   const params = useParams();
@@ -16,9 +19,13 @@ export default function ItemDetailsPage() {
   const { data: item, isLoading, error } = useItem(itemId);
   const { data: claimsResponse, isLoading: loadingClaims } = useItemClaims(itemId);
   const { mutateAsync: updateClaimStatus } = useUpdateClaimStatus();
+  const { mutateAsync: createClaim, isPending: isSubmittingClaim } = useCreateClaim();
   const { user } = useAuth();
 
   const [qrUrl, setQrUrl] = useState("");
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [activeChatClaimId, setActiveChatClaimId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -44,6 +51,7 @@ export default function ItemDetailsPage() {
 
   const isOwner = user?.id === item.userId;
   const claims = Array.isArray(claimsResponse) ? claimsResponse : (claimsResponse as any)?.data || [];
+  const myClaim = claims.find((c: any) => c.claimant?.id === user?.id || c.claimantId === user?.id);
 
   const handleStatusChange = async (claimId: string, status: "APPROVED" | "REJECTED") => {
     try {
@@ -52,6 +60,21 @@ export default function ItemDetailsPage() {
     } catch (err) {
       alert("Failed to update claim.");
     }
+  };
+
+  const handleClaimSubmit = async (data: { message: string }) => {
+    try {
+      await createClaim({ itemId, message: data.message });
+      setIsClaimModalOpen(false);
+      alert("Claim submitted successfully. The owner will review it.");
+    } catch (err) {
+      alert("Failed to submit claim. You may have already claimed this item.");
+    }
+  };
+
+  const openChat = (claimId: string) => {
+    setActiveChatClaimId(claimId);
+    setIsChatModalOpen(true);
   };
 
   return (
@@ -139,15 +162,40 @@ export default function ItemDetailsPage() {
                 <span>Print Tag</span>
               </button>
               
-              {!isOwner && item.status.toLowerCase() !== 'claimed' && (
-                <button className="flex-1 sm:flex-none btn-primary px-6 py-2.5">
+              {!isOwner && item.status.toLowerCase() !== 'claimed' && !myClaim && (
+                <button 
+                  onClick={() => setIsClaimModalOpen(true)}
+                  className="flex-1 sm:flex-none btn-primary px-6 py-2.5"
+                >
                    Claim Item
+                </button>
+              )}
+              
+              {!isOwner && myClaim && (
+                <button 
+                  onClick={() => openChat(myClaim.id)}
+                  className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                >
+                  <MessageCircle size={18} />
+                   Chat with Owner
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <Modal isOpen={isClaimModalOpen} onClose={() => setIsClaimModalOpen(false)} title="Claim Item">
+        <div className="p-4">
+          <p className="text-sm text-neutral-400 mb-4">
+            Provide details proving ownership. The owner will review your message.
+          </p>
+          <ClaimForm 
+            onSubmit={handleClaimSubmit} 
+            isLoading={isSubmittingClaim} 
+          />
+        </div>
+      </Modal>
 
       {/* Claims Section (Only visible to OWNER) */}
       {isOwner && (
@@ -198,28 +246,44 @@ export default function ItemDetailsPage() {
                     </div>
                   </div>
                 </div>
-                
-                {claim.status === "PENDING" && (
-                  <div className="flex gap-3 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-neutral-800 pt-4 sm:pt-0">
-                    <button 
-                      onClick={() => handleStatusChange(claim.id, "REJECTED")}
-                      className="px-5 py-2.5 bg-red-500/10 border border-transparent hover:border-red-500/50 text-red-500 rounded-lg text-sm font-medium transition-all flex-1 sm:flex-none"
-                    >
-                      Reject
-                    </button>
-                    <button 
-                      onClick={() => handleStatusChange(claim.id, "APPROVED")}
-                      className="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 hover:shadow-lg hover:shadow-green-900/30 transition-all flex-1 sm:flex-none"
-                    >
-                      Approve Match
-                    </button>
-                  </div>
-                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-neutral-800 pt-4 sm:pt-0">
+                  <button
+                    onClick={() => openChat(claim.id)}
+                    className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle size={16} />
+                    Chat
+                  </button>
+                  
+                  {claim.status === "PENDING" && (
+                    <>
+                      <button
+                        onClick={() => handleStatusChange(claim.id, "REJECTED")}
+                        className="px-4 py-2.5 bg-red-500/10 border border-transparent hover:border-red-500/50 text-red-500 rounded-lg text-sm font-medium transition-all"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(claim.id, "APPROVED")}
+                        className="px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 hover:shadow-lg hover:shadow-green-900/30 transition-all"
+                      >
+                        Approve Match
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Chat Modal */}
+      <Modal isOpen={isChatModalOpen} onClose={() => setIsChatModalOpen(false)} title="Claim Conversation">
+        {activeChatClaimId && <ChatWindow claimId={activeChatClaimId} />}
+      </Modal>
+
     </div>
   );
 }
