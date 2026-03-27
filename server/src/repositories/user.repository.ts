@@ -10,6 +10,14 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { email } });
   }
 
+  async findByPhone(phone: string) {
+    return prisma.user.findUnique({ where: { phone } });
+  }
+
+  async findByAadhar(aadhar: string) {
+    return prisma.user.findUnique({ where: { aadhar } });
+  }
+
   async create(data: Prisma.UserCreateInput) {
     return prisma.user.create({ data });
   }

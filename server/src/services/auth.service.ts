@@ -15,14 +15,28 @@ export class AuthService {
       throw new ApiError(409, 'User with this email already exists');
     }
 
+    if (input.phone) {
+      const existingPhone = await userRepository.findByPhone(input.phone.trim());
+      if (existingPhone) {
+        throw new ApiError(409, 'User with this phone number already exists');
+      }
+    }
+
+    if (input.aadhar) {
+      const existingAadhar = await userRepository.findByAadhar(input.aadhar.trim());
+      if (existingAadhar) {
+        throw new ApiError(409, 'User with this Aadhar number already exists');
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(input.password, 12);
 
     const user = await userRepository.create({
       name: input.name,
       email: input.email,
       password: hashedPassword,
-      phone: input.phone,
-      aadhar: input.aadhar,
+      phone: input.phone?.trim() || undefined,
+      aadhar: input.aadhar?.trim() || undefined,
     });
 
     const token = jwt.sign({ userId: user.id, email: user.email }, config.jwt.secret, { expiresIn: config.jwt.expiresIn as any });
