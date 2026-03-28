@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useItems } from "@/hooks/useItems";
 import { ItemCard } from "@/components/cards/ItemCard";
-import { Search, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ItemsPage() {
   const [status, setStatus] = useState("");
@@ -17,94 +18,136 @@ export default function ItemsPage() {
     search,
   });
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold text-neutral-100 tracking-tight">Explore Items</h1>
-          <p className="text-neutral-400 mt-1 text-sm">Discover and report lost or found items nearby.</p>
-        </div>
-        <Link 
-          href="/items/new"
-          className="btn-primary flex items-center gap-2 w-full md:w-auto justify-center shadow-lg shadow-blue-900/20"
-        >
-          <Plus size={18} />
-          Report Item
-        </Link>
-      </div>
+  const categories = ["All", "Electronics", "Accessories", "Bags", "Pets", "Documents", "Other"];
+  const statuses = ["All", "LOST", "FOUND", "CLAIMED"];
 
-      {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-500">
-            <Search size={18} />
-          </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 40 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+  };
+
+  return (
+    <div className="space-y-20 pb-20 pt-10">
+      {/* Hero Search Section */}
+      <section className="relative">
+        <div className="flex justify-between items-start mb-12">
+          <h1 className="text-sm font-medium tracking-widest text-neutral-500 uppercase">Archive</h1>
+          <Link 
+            href="/items/new"
+            className="group flex items-center gap-3 text-sm font-medium tracking-widest uppercase text-white hover:text-neutral-400 transition-colors"
+          >
+            Report Item
+            <span className="bg-white text-black p-1 rounded-full group-hover:bg-neutral-400 transition-colors">
+              <Plus size={16} />
+            </span>
+          </Link>
+        </div>
+
+        <div className="relative group">
           <input
             type="text"
-            placeholder="Search active listings..."
+            placeholder="Search items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input-field pl-10 h-full py-2.5 bg-neutral-900/50 border-neutral-800"
+            className="w-full bg-transparent text-5xl md:text-7xl lg:text-8xl font-medium tracking-tighter text-white placeholder:text-neutral-800 focus:outline-none transition-all py-4"
           />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-neutral-800 group-focus-within:bg-white transition-colors duration-700"></div>
         </div>
-        
-        <select 
-          className="input-field w-full md:w-40 py-2.5 bg-neutral-900/50 border-neutral-800 text-neutral-300 [&>option]:bg-neutral-900"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="LOST">Lost</option>
-          <option value="FOUND">Found</option>
-          <option value="CLAIMED">Claimed</option>
-        </select>
-        
-        <select
-          className="input-field w-full md:w-48 py-2.5 bg-neutral-900/50 border-neutral-800 text-neutral-300 [&>option]:bg-neutral-900"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Accessories">Accessories</option>
-          <option value="Bags">Bags</option>
-          <option value="Pets">Pets</option>
-          <option value="Documents">Documents</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+      </section>
 
-      {isLoading && (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-      
-      {error && (
-        <div className="text-center py-10 text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
-          Failed to load items. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && itemsResponse?.data && itemsResponse.data.length === 0 && (
-        <div className="text-center py-16 card flex flex-col items-center justify-center border-dashed">
-          <div className="w-16 h-16 bg-neutral-800/50 rounded-full flex items-center justify-center mb-4 text-neutral-500">
-            <Search size={24} />
+      {/* Minimalism Filters */}
+      <section className="flex flex-col md:flex-row gap-12 items-start md:items-center justify-between border-b border-white/10 pb-8">
+        <div className="space-y-4 w-full md:w-auto">
+          <h3 className="text-xs uppercase tracking-widest text-neutral-600 font-bold mb-4">Status</h3>
+          <div className="flex flex-wrap gap-2">
+            {statuses.map(s => (
+              <button
+                key={s}
+                onClick={() => setStatus(s === "All" ? "" : s)}
+                className={`px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
+                  (status === "" && s === "All") || status === s 
+                    ? "bg-white text-black" 
+                    : "bg-transparent text-neutral-500 hover:text-white border border-white/10"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-          <h3 className="text-lg font-medium text-neutral-200 mb-1">No items found</h3>
-          <p className="text-neutral-500 text-sm">Try adjusting your filters or search terms.</p>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {itemsResponse?.data?.map((item) => (
-          <Link href={`/items/${item.id}`} key={item.id} className="block group">
-            <div className="h-full transition-transform duration-200 group-hover:-translate-y-1">
-              <ItemCard item={item} />
-            </div>
-          </Link>
-        ))}
-      </div>
+        <div className="space-y-4 w-full md:w-auto">
+          <h3 className="text-xs uppercase tracking-widest text-neutral-600 font-bold mb-4">Category</h3>
+          <div className="flex flex-wrap gap-2">
+            {categories.map(c => (
+              <button
+                key={c}
+                onClick={() => setCategory(c === "All" ? "" : c)}
+                className={`px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
+                  (category === "" && c === "All") || category === c 
+                    ? "bg-white text-black" 
+                    : "bg-transparent text-neutral-500 hover:text-white border border-white/10"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Content Grid */}
+      <section className="min-h-[50vh]">
+        {isLoading && (
+          <div className="flex justify-center items-center h-40">
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              className="w-12 h-12 border-t border-l border-white rounded-full"
+            />
+          </div>
+        )}
+        
+        {error && (
+          <div className="text-center py-20">
+            <p className="text-xl text-red-500 font-light tracking-wide">Failed to retrieve the archive.</p>
+          </div>
+        )}
+
+        {!isLoading && !error && itemsResponse?.data && itemsResponse.data.length === 0 && (
+          <div className="py-32 flex flex-col items-center justify-center text-center">
+            <h3 className="text-3xl font-light text-neutral-600 tracking-tight mb-4">Nothing to display.</h3>
+            <p className="text-neutral-500 text-sm tracking-widest uppercase">The archive is empty here.</p>
+          </div>
+        )}
+
+        {itemsResponse?.data && itemsResponse.data.length > 0 && (
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12"
+          >
+            <AnimatePresence>
+              {itemsResponse.data.map((item) => (
+                <motion.div key={item.id} variants={itemVariants} layoutId={`item-${item.id}`}>
+                  <Link href={`/items/${item.id}`} className="block h-full cursor-none">
+                    <ItemCard item={item} />
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </section>
     </div>
   );
 }

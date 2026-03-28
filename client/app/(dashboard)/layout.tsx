@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { HeartPulse, LayoutList, Map, UserCircle, LogOut, Bell, MessageCircle, ScanLine, QrCode } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 export default function DashboardLayout({
   children,
@@ -20,61 +21,69 @@ export default function DashboardLayout({
   };
 
   const navItems = [
-    { name: "Items", path: "/items", icon: <LayoutList size={20} /> },
-    { name: "Map", path: "/map", icon: <Map size={20} /> },
-    { name: "Chats", path: "/chats", icon: <MessageCircle size={20} /> },
-    { name: "QR Generator", path: "/generate", icon: <QrCode size={20} /> },
-    { name: "QR Scanner", path: "/scan", icon: <ScanLine size={20} /> },
-    { name: "Notifications", path: "/notifications", icon: <Bell size={20} /> },
-    { name: "Profile", path: "/profile", icon: <UserCircle size={20} /> },
+    { name: "Items", path: "/items", icon: <LayoutList size={18} /> },
+    { name: "Map", path: "/map", icon: <Map size={18} /> },
+    { name: "Chats", path: "/chats", icon: <MessageCircle size={18} /> },
+    { name: "QR", path: "/generate", icon: <QrCode size={18} /> },
+    { name: "Scan", path: "/scan", icon: <ScanLine size={18} /> },
   ];
 
   return (
-    <div className="min-h-screen flex bg-neutral-950 text-neutral-100 selection:bg-neutral-800">
-      {/* Sidebar */}
-      <aside className="w-64 bg-neutral-950 border-r border-neutral-800/50 p-6 hidden md:flex flex-col">
-        <Link href="/" className="flex items-center gap-3 mb-12 text-neutral-100 group transition-opacity hover:opacity-80">
-          <HeartPulse className="h-6 w-6 text-neutral-100" />
-          <span className="text-xl font-medium tracking-tight">Returnly</span>
-        </Link>
-        <nav className="space-y-1 flex-1">
-          {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.path);
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-neutral-800/80 text-neutral-100 shadow-sm"
-                    : "text-neutral-400 hover:bg-neutral-800/40 hover:text-neutral-200"
-                }`}
-              >
-                <div className={`${isActive ? "text-neutral-100" : "text-neutral-400"}`}>
+    <div className="min-h-screen bg-black text-white selection:bg-white/20 font-sans">
+      {/* Sleek Floating Top Navigation */}
+      <header className="fixed top-0 inset-x-0 z-50 flex justify-center pt-6 px-4 pointer-events-none">
+        <motion.nav 
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="pointer-events-auto bg-black/60 backdrop-blur-xl border border-white/10 rounded-full py-3 px-6 flex items-center gap-8 shadow-2xl"
+        >
+          <Link href="/" className="flex items-center gap-2 text-white group mr-4">
+            <HeartPulse className="h-5 w-5" />
+            <span className="font-semibold tracking-tight text-lg">Returnly</span>
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-6">
+            {navItems.map((item) => {
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-2 text-sm transition-all duration-300 relative ${
+                    isActive ? "text-white font-medium" : "text-neutral-400 hover:text-white"
+                  }`}
+                >
                   {item.icon}
-                </div>
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+                  {item.name}
+                  {isActive && (
+                    <motion.div 
+                      layoutId="nav-pill"
+                      className="absolute -bottom-3 left-0 right-0 h-[2px] bg-white rounded-full"
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
-        <div className="mt-auto hidden md:block">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-neutral-400 hover:bg-neutral-800/40 hover:text-neutral-200 transition-all duration-200 group"
-          >
-            <LogOut size={20} className="text-neutral-400 group-hover:text-neutral-200 transition-colors" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
+          <div className="flex items-center gap-4 ml-4 pl-4 border-l border-white/10">
+            <Link href="/notifications" className="text-neutral-400 hover:text-white transition-colors">
+              <Bell size={20} />
+            </Link>
+            <Link href="/profile" className="text-neutral-400 hover:text-white transition-colors">
+              <UserCircle size={20} />
+            </Link>
+            <button onClick={handleLogout} className="text-neutral-400 hover:text-white transition-colors">
+              <LogOut size={20} />
+            </button>
+          </div>
+        </motion.nav>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto w-full h-screen">
-        <div className="max-w-6xl mx-auto">
-          {children}
-        </div>
+      {/* Main Content Area */}
+      <main className="pt-32 pb-16 px-6 md:px-12 max-w-7xl mx-auto min-h-screen flex flex-col">
+        {children}
       </main>
     </div>
   );

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
 import { LocationPicker } from "../maps/LocationPicker";
-import { UploadCloud } from "lucide-react";
+import { ArrowRight, ArrowLeft, UploadCloud } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ItemFormProps {
   onSubmit: (data: any) => void;
@@ -22,8 +22,6 @@ export function ItemForm({ onSubmit, initialData, isLoading }: ItemFormProps) {
   const [latitude, setLatitude] = useState<number | undefined>(initialData?.latitude);
   const [longitude, setLongitude] = useState<number | undefined>(initialData?.longitude);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split("T")[0]);
-
-  // For visual representation of image upload step
   const [images, setImages] = useState<File[]>([]);
 
   const handleNext = () => setStep((s) => s + 1);
@@ -32,201 +30,151 @@ export function ItemForm({ onSubmit, initialData, isLoading }: ItemFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step !== 3) {
-        handleNext();
-        return;
+      handleNext();
+      return;
     }
     onSubmit({ 
-      title, 
-      description, 
-      category, 
-      status, 
-      location: locationName, 
-      latitude, 
-      longitude, 
-      date: new Date(date).toISOString() 
-      // Ideally, images would be uploaded to cloud storage and URLs returned here
+      title, description, category, status, location: locationName, latitude, longitude, date: new Date(date).toISOString() 
     });
   };
 
+  const categories = ["Electronics", "Documents", "Keys", "Wallet", "Clothing", "Accessories", "Bags", "Pets", "Other"];
+
+  const slideVariants = {
+    enter: (direction: number) => ({ x: direction > 0 ? 50 : -50, opacity: 0 }),
+    center: { zIndex: 1, x: 0, opacity: 1 },
+    exit: (direction: number) => ({ zIndex: 0, x: direction < 0 ? 50 : -50, opacity: 0 }),
+  };
+  
+  const [direction, setDirection] = useState(1);
+  
+  const goToNext = () => { setDirection(1); handleNext(); };
+  const goToPrev = () => { setDirection(-1); handlePrev(); };
+
   return (
-    <div className="card p-6 md:p-8">
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-between mb-8 relative">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-neutral-800 rounded-full z-0"></div>
-        <div 
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 rounded-full z-0 transition-all duration-300"
-          style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
-        ></div>
-        
-        {[1, 2, 3].map((num) => (
-          <div 
-            key={num} 
-            className={`w-8 h-8 rounded-full flex items-center justify-center z-10 transition-colors duration-300 ${
-              step >= num ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-neutral-800 text-neutral-500'
-            } text-sm font-bold border-4 border-[#171717]`}
-          >
-            {num}
+    <div className="w-full relative min-h-[500px] flex flex-col">
+      {/* Abstract Progress Indicator */}
+      <div className="flex justify-between items-end mb-16">
+        <div>
+          <h2 className="text-sm tracking-widest uppercase font-bold text-neutral-500 mb-1">Step {step} of 3</h2>
+          <div className="text-3xl tracking-tight text-white font-medium">
+            {step === 1 && "Visual Identity"}
+            {step === 2 && "Core Details"}
+            {step === 3 && "Location Data"}
           </div>
-        ))}
+        </div>
+        <div className="flex gap-2">
+          {[1, 2, 3].map(i => (
+            <div key={i} className={`h-1 rounded-full transition-all duration-500 ${step >= i ? "w-12 bg-white" : "w-4 bg-white/20"}`} />
+          ))}
+        </div>
       </div>
 
-      <h2 className="text-xl font-semibold mb-6 text-neutral-100 pb-4 border-b border-neutral-800/50">
-        {step === 1 ? "Upload Images" : step === 2 ? "Item Details" : "Pin Location"}
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* STEP 1: IMAGES */}
-        {step === 1 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
-            <div className="border-2 border-dashed border-neutral-700 hover:border-blue-500/50 bg-neutral-900/30 rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer group">
-              <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <UploadCloud className="text-neutral-400 group-hover:text-blue-500" size={32} />
-              </div>
-              <p className="text-neutral-300 font-medium mb-1">Click to upload or drag and drop</p>
-              <p className="text-neutral-500 text-sm">SVG, PNG, JPG or GIF (max. 5MB)</p>
-              <input type="file" multiple className="hidden" onChange={(e) => {
-                  if (e.target.files) {
-                      setImages(Array.from(e.target.files));
-                  }
-              }} />
-            </div>
-            {images.length > 0 && (
-                <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                    {images.map((file, idx) => (
-                        <div key={idx} className="w-20 h-20 bg-neutral-800 rounded-md overflow-hidden flex-shrink-0 border border-neutral-700">
-                            <span className="text-xs text-neutral-500 p-2 break-words">{file.name}</span>
-                        </div>
-                    ))}
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col relative">
+        <AnimatePresence custom={direction} mode="wait">
+          <motion.div
+            key={step}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex-1"
+          >
+            {/* STEP 1: IMAGES */}
+            {step === 1 && (
+              <div className="space-y-8">
+                <div className="h-64 border border-white/10 border-dashed rounded-[2rem] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group flex flex-col items-center justify-center relative overflow-hidden">
+                  <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={(e) => {
+                    if (e.target.files) setImages(Array.from(e.target.files));
+                  }} />
+                  <UploadCloud className="text-white/30 group-hover:text-white transition-colors mb-4" size={48} strokeWidth={1} />
+                  <p className="text-white text-xl font-light mb-2">Select visual evidence</p>
+                  <p className="text-neutral-500 uppercase tracking-widest text-xs font-medium">Drag & Drop or Browse</p>
                 </div>
-            )}
-          </div>
-        )}
-
-        {/* STEP 2: DETAILS */}
-        {step === 2 && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">What is the item?</label>
-                <input 
-                    className="input-field" 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                    placeholder="e.g. Blue North Face Backpack"
-                    required 
-                />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1.5">Description & Identifying Features</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Include serial numbers, unique scratches, contents..."
-                className="input-field min-h-[120px] resize-y"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="input-field text-neutral-200 [&>option]:bg-neutral-900"
-                  required
-                >
-                  <option value="">Select Category...</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Documents">Documents</option>
-                  <option value="Keys">Keys</option>
-                  <option value="Wallet">Wallet</option>
-                  <option value="Clothing">Clothing</option>
-                  <option value="Accessories">Accessories</option>
-                  <option value="Bags">Bags</option>
-                  <option value="Pets">Pets</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="input-field text-neutral-200 [&>option]:bg-neutral-900"
-                >
-                  <option value="LOST">I Lost This Item</option>
-                  <option value="FOUND">I Found This Item</option>
-                </select>
-              </div>
-            </div>
-            
-            <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Date of Event</label>
-                <input 
-                    type="date" 
-                    className="input-field color-scheme-dark" 
-                    value={date} 
-                    onChange={(e) => setDate(e.target.value)} 
-                    required 
-                />
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: LOCATION */}
-        {step === 3 && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-1.5">Location Name / Landmark (Optional)</label>
-                <input 
-                    className="input-field" 
-                    value={locationName} 
-                    onChange={(e) => setLocationName(e.target.value)} 
-                    placeholder="e.g. Central Park near the fountain"
-                />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-neutral-400">Pin Exact Location on Map</label>
-              <div className="rounded-xl overflow-hidden border border-neutral-800 shadow-inner h-[300px]">
-                  <LocationPicker 
-                    onSelect={(lat, lng) => {
-                      setLatitude(lat);
-                      setLongitude(lng);
-                    }}
-                    defaultLocation={latitude && longitude ? [latitude, longitude] : undefined}
-                  />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-6 border-t border-neutral-800/50 mt-8">
-            {step > 1 ? (
-                <button 
-                  type="button" 
-                  onClick={handlePrev} 
-                  className="px-6 py-2.5 rounded-md font-medium text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors"
-                >
-                    Back
-                </button>
-            ) : <div></div>}
-            
-            <button 
-              type="submit" 
-              className="btn-primary px-8 py-2.5 ml-auto flex items-center gap-2"
-              disabled={isLoading}
-            >
-                {isLoading ? (
-                    <span className="flex items-center gap-2">Processing...</span>
-                ) : step === 3 ? (
-                    <>{initialData ? "Update Item" : "Submit Report"}</>
-                ) : (
-                    "Continue"
+                {images.length > 0 && (
+                  <div className="flex gap-4 overflow-x-auto pb-4">
+                    {images.map((file, idx) => (
+                      <div key={idx} className="w-24 h-24 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-center p-2">
+                        <span className="text-xs text-neutral-400 truncate w-full">{file.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
+              </div>
+            )}
+
+            {/* STEP 2: DETAILS */}
+            {step === 2 && (
+              <div className="space-y-12">
+                <div className="group">
+                  <input className="w-full bg-transparent text-4xl font-medium tracking-tight text-white placeholder:text-neutral-700 outline-none pb-4 border-b border-white/20 focus:border-white transition-colors" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What did you lose or find?" required />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-4">
+                    <label className="text-xs tracking-widest uppercase text-neutral-500 font-bold">Category</label>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map(c => (
+                        <button key={c} type="button" onClick={() => setCategory(c)} className={`px-4 py-2 rounded-full text-xs uppercase tracking-widest transition-all duration-300 ${category === c ? "bg-white text-black font-bold" : "bg-transparent text-neutral-500 border border-white/20 hover:text-white"}`}>
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-xs tracking-widest uppercase text-neutral-500 font-bold">Status Type</label>
+                    <div className="flex gap-4">
+                      {["LOST", "FOUND"].map(s => (
+                        <button key={s} type="button" onClick={() => setStatus(s)} className={`flex-1 py-4 rounded-2xl text-sm tracking-widest uppercase font-bold transition-all duration-300 border ${status === s ? "bg-white text-black border-transparent" : "bg-transparent text-neutral-500 border-white/20 hover:border-white/50"}`}>
+                          I {s === "LOST" ? "Lost" : "Found"} This
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-xs tracking-widest uppercase text-neutral-500 font-bold">Specific Details</label>
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Engravings, scratches, specific contents..." className="w-full bg-transparent text-xl font-light text-white placeholder:text-neutral-700 outline-none pb-4 border-b border-white/20 focus:border-white transition-colors min-h-[100px] resize-none" required />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: LOCATION */}
+            {step === 3 && (
+              <div className="space-y-10">
+                <div className="group">
+                  <input className="w-full bg-transparent text-3xl font-light tracking-tight text-white placeholder:text-neutral-700 outline-none pb-4 border-b border-white/20 focus:border-white transition-colors" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Landmark or general area..." />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs tracking-widest uppercase text-neutral-500 font-bold">Geographic Coordinates</label>
+                    <span className="text-xs text-neutral-600 font-mono tracking-wider">{latitude?.toFixed(4) || "---"}, {longitude?.toFixed(4) || "---"}</span>
+                  </div>
+                  <div className="h-[400px] rounded-[2rem] overflow-hidden border border-white/10 grayscale contrast-125 hover:grayscale-0 transition-all duration-700">
+                    <LocationPicker onSelect={(lat, lng) => { setLatitude(lat); setLongitude(lng); }} defaultLocation={latitude && longitude ? [latitude, longitude] : undefined} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="flex items-center justify-between mt-16 pt-8 border-t border-white/10">
+          {step > 1 ? (
+            <button type="button" onClick={goToPrev} className="text-xs uppercase tracking-widest font-bold text-neutral-500 hover:text-white transition-colors flex items-center gap-2">
+              <ArrowLeft size={14} /> Navigate Back
             </button>
+          ) : <div />}
+          
+          <button type="button" onClick={(e) => { if (step !== 3) { e.preventDefault(); goToNext(); } else { handleSubmit(e as any); } }} disabled={isLoading} className="bg-white text-black px-8 py-4 rounded-full text-xs uppercase tracking-widest font-bold hover:bg-neutral-200 transition-colors flex items-center gap-3">
+            {isLoading ? "Synchronizing..." : step === 3 ? "Finalize Profile" : "Continue"}
+            {step !== 3 && <ArrowRight size={14} />}
+          </button>
         </div>
       </form>
     </div>
